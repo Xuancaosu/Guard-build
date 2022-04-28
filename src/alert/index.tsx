@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import t from 'prop-types';
 
 export interface AlertProps {
@@ -16,7 +16,8 @@ const kinds: KindMap = {
   warning: '#FFA502',
 };
 
-const Alert: React.FC<AlertProps> = ({ children, kind = 'info', ...rest }) => (
+// @ts-ignore
+const Alert: FC<AlertProps> = ({ children, kind = 'info', ...rest }) => (
   <div
     className={prefixCls}
     style={{
