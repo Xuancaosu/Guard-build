@@ -20,5 +20,9 @@ module.exports = {
         ],
       ],
     },
+    cjs: {
+      presets: [['@babel/env', { modules: 'commonjs' }]],
+      plugins: [['@babel/plugin-transform-runtime', { useESModules: false }]],
+    },
   },
 };

@@ -3,7 +3,12 @@ const autoPrefixer = require('gulp-autoprefixer');
 const babel = require('gulp-babel');
 const less = require('gulp-less');
 const cssnano = require('gulp-cssnano');
+const concat = require('gulp-concat');
 const through2 = require('through2');
+const gulpWebpack = require('webpack-stream');
+const webpackConfig = require('./webpack.config.js');
+const rename = require('gulp-rename')
+
 
 const paths = {
   dest: {
@@ -52,12 +57,29 @@ function compileCJS() {
   return compileScripts('cjs', paths.dest.lib);
 }
 
-function commonESM() {
+function compileESM() {
   return compileScripts('esm', paths.dest.esm);
 }
 
+function compileUMD() {
+  const { scripts } = paths;
+
+  return gulp.src(scripts).pipe(gulpWebpack(webpackConfig)).pipe(gulp.dest(paths.dest.dist));
+}
+
+function compileMiniCss() {
+  return gulp
+    .src(paths.styles)
+    .pipe(less())
+    .pipe(concat('index.css'))
+    .pipe(autoPrefixer())
+    .pipe(rename({ suffix: '.min' }))
+    .pipe(cssnano({ zindex: false, reduceIdents: false }))
+    .pipe(gulp.dest(paths.dest.dist));
+}
+
 function copyLess() {
-  return gulp.src(paths.styles).pipe(gulp.dest(paths.dest.dist)).pipe(gulp.dest(paths.dest.esm));
+  return gulp.src(paths.styles).pipe(gulp.dest(paths.dest.lib)).pipe(gulp.dest(paths.dest.esm));
 }
 
 function lessToCss() {
@@ -71,10 +93,14 @@ function lessToCss() {
 }
 
 // 串行
-const buildScripts = gulp.parallel(compileCJS, commonESM, lessToCss);
+// const buildScripts = gulp.parallel(compileCJS, lessToCss);
+const buildScripts = gulp.series(compileCJS, compileESM, lessToCss);
+
+const buildUMD = gulp.series(compileUMD, compileMiniCss);
 
 // 并行
-const build = gulp.series(buildScripts, copyLess);
+// const build = gulp.series(compileMiniCss);
+const build = gulp.parallel(buildScripts, copyLess, buildUMD);
 
 exports.build = build;
 
